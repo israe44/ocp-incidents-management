@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Board - OCP Incidents</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-white">
+  <header class="border-b border-white/10 bg-white/5">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">Kanban Board</h1>
+        <p class="text-white/60 text-sm">Drag tickets between columns.</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">Dashboard</a>
+        <a href="{% url 'logout' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+      {% for key, items in cols.items %}
+      <section class="rounded-2xl bg-white/5 border border-white/10 p-3"
+               data-col="{{ key }}"
+               ondragover="event.preventDefault()"
+               ondrop="onDrop(event, '{{ key }}')">
+
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold">{{ key }}</h2>
+          <span class="text-xs text-white/60">{{ items|length }}</span>
+        </div>
+
+        <div class="space-y-3 min-h-[60px]">
+          {% for t in items %}
+            <div class="rounded-xl bg-slate-900/70 border border-white/10 p-3 cursor-grab"
+                 draggable="true"
+                 ondragstart="onDragStart(event, '{{ t.id }}')">
+              <div class="text-sm font-semibold">#{{ t.id }} — {{ t.title }}</div>
+              <div class="text-xs text-white/60 mt-1">
+                Urgency: {{ t.urgency }}
+                {% if t.assigned_to %} · {{ t.assigned_to.username }}{% endif %}
+              </div>
+              <a class="text-xs text-blue-300 hover:text-blue-200 mt-2 inline-block"
+                 href="{% url 'ticket_detail' t.id %}">Open</a>
+            </div>
+          {% empty %}
+            <div class="text-sm text-white/50">No tickets</div>
+          {% endfor %}
+        </div>
+
+      </section>
+      {% endfor %}
+
+    </div>
+  </main>
+
+<script>
+  let draggedId = null;
+
+  function onDragStart(e, id) {
+    draggedId = id;
+    e.dataTransfer.setData("text/plain", id);
+  }
+
+  async function onDrop(e, status) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain") || draggedId;
+    if (!id) return;
+
+    const form = new FormData();
+    form.append("status", status);
+
+    const res = await fetch(`/api/tickets/${id}/move/`, {
+      method: "POST",
+      body: form,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    });
+
+    if (res.ok) {
+      location.reload();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Could not move ticket");
+    }
+  }
+
+  function getCookie(name) {
+    const v = document.cookie.split("; ").find(row => row.startsWith(name + "="));
+    return v ? decodeURIComponent(v.split("=")[1]) : "";
+  }
+</script>
+
+</body>
+</html>

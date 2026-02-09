@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create Ticket - OCP Incidents</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-white">
+  <header class="border-b border-white/10 bg-white/5">
+    <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">New Ticket</h1>
+        <p class="text-white/60 text-sm">Describe the incident clearly.</p>
+      </div>
+      <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">
+        Back
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-6">
+    {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-red-200 text-sm">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="POST" class="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-sm text-white/70 mb-1">Title</label>
+        <input name="title" required
+               class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"
+               placeholder="ex: VPN access down in building A" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-white/70 mb-1">Urgency</label>
+        <select name="urgency"
+                class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500">
+          <option value="LOW">LOW</option>
+          <option value="MEDIUM" selected>MEDIUM</option>
+          <option value="HIGH">HIGH</option>
+          <option value="CRITICAL">CRITICAL</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm text-white/70 mb-1">Description</label>
+        <textarea name="description" rows="6" required
+                  class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"
+                  placeholder="Explain what happened, when, where, and any screenshots/info..."></textarea>
+      </div>
+
+      <button class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 transition px-4 py-2 font-medium">
+        Create Ticket
+      </button>
+    </form>
+  </main>
+</body>
+</html>

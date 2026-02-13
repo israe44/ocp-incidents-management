@@ -7,6 +7,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Count, Avg, Q, F
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+from datetime import timedelta
+import csv
 
 from users.models import User
 
@@ -35,13 +40,30 @@ def dashboard(request):
     if search:
         tickets = tickets.filter(title__icontains=search)
 
-    tickets = tickets.order_by("-created_at")
+    tickets_list = tickets.order_by("-created_at")
+
+    # Calculate summary statistics
+    all_tickets = Ticket.objects.all()
+    if u.role == "technician":
+        all_tickets = all_tickets.filter(assigned_to=u)
+    elif u.role == "user":
+        all_tickets = all_tickets.filter(created_by=u)
+
+    summary = {
+        'total': all_tickets.count(),
+        'new': all_tickets.filter(status="NEW").count(),
+        'in_progress': all_tickets.filter(status="IN_PROGRESS").count(),
+        'resolved': all_tickets.filter(status="RESOLVED").count(),
+        'critical': all_tickets.filter(urgency="CRITICAL").count(),
+        'overdue': sum(1 for t in all_tickets.filter(status__in=["NEW", "IN_PROGRESS"]) if t.is_overdue),
+    }
 
     return render(request, "tickets/dashboard.html", {
-        "tickets": tickets,
+        "tickets": tickets_list,
         "status": status,
         "urgency": urgency,
-        "search": search
+        "search": search,
+        "summary": summary,
     })
 
 
@@ -89,6 +111,7 @@ def ticket_create(request):
         title = request.POST.get("title", "").strip()
         description = request.POST.get("description", "").strip()
         urgency = request.POST.get("urgency", "MEDIUM")
+        category = request.POST.get("category", "OTHER")
 
         if not title or not description:
             messages.error(request, "Title and description are required.")
@@ -98,6 +121,7 @@ def ticket_create(request):
             title=title,
             description=description,
             urgency=urgency,
+            category=category,
             created_by=request.user
         )
 
@@ -165,6 +189,13 @@ def ticket_status(request, ticket_id):
     new_status = request.POST.get("status")
     old_status = t.status
     t.status = new_status
+
+    # Track resolved and closed timestamps
+    if new_status == "RESOLVED" and not t.resolved_at:
+        t.resolved_at = timezone.now()
+    if new_status == "CLOSED" and not t.closed_at:
+        t.closed_at = timezone.now()
+
     t.save()
 
     TicketHistory.objects.create(
@@ -256,6 +287,13 @@ def api_move_ticket(request, ticket_id):
 
     old_status = t.status
     t.status = new_status
+
+    # Track resolved and closed timestamps
+    if new_status == "RESOLVED" and not t.resolved_at:
+        t.resolved_at = timezone.now()
+    if new_status == "CLOSED" and not t.closed_at:
+        t.closed_at = timezone.now()
+
     t.save()
 
     TicketHistory.objects.create(
@@ -268,3 +306,133 @@ def api_move_ticket(request, ticket_id):
     )
 
     return JsonResponse({"ok": True})
+
+
+@login_required
+def analytics(request):
+    """Analytics dashboard with comprehensive statistics"""
+
+    # Base queryset - admins see all, others see their scope
+    tickets = Ticket.objects.all()
+    if request.user.role == "technician":
+        tickets = tickets.filter(assigned_to=request.user)
+    elif request.user.role == "user":
+        tickets = tickets.filter(created_by=request.user)
+
+    # Status distribution
+    status_stats = tickets.values('status').annotate(
+        count=Count('id')).order_by('status')
+
+    # Urgency distribution
+    urgency_stats = tickets.values('urgency').annotate(
+        count=Count('id')).order_by('urgency')
+
+    # Category distribution
+    category_stats = tickets.values('category').annotate(
+        count=Count('id')).order_by('category')
+
+    # Time-based statistics (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_tickets = tickets.filter(created_at__gte=thirty_days_ago)
+
+    # Tickets created per day (last 30 days)
+    tickets_by_day = recent_tickets.annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(count=Count('id')).order_by('date')
+
+    # Average resolution time (in hours) for resolved tickets
+    resolved_tickets = tickets.filter(resolved_at__isnull=False)
+    avg_resolution_time = None
+    if resolved_tickets.exists():
+        total_time = sum([t.time_to_resolve or 0 for t in resolved_tickets])
+        avg_resolution_time = round(total_time / resolved_tickets.count(), 2)
+
+    # Overdue tickets
+    overdue_count = sum(1 for t in tickets.filter(
+        status__in=["NEW", "IN_PROGRESS"]
+    ) if t.is_overdue)
+
+    # Technician performance (admin only)
+    tech_stats = None
+    if request.user.role == "admin":
+        technicians = User.objects.filter(role="technician")
+        tech_stats = []
+        for tech in technicians:
+            tech_tickets = Ticket.objects.filter(assigned_to=tech)
+            resolved = tech_tickets.filter(
+                status__in=["RESOLVED", "CLOSED"]).count()
+            in_progress = tech_tickets.filter(status="IN_PROGRESS").count()
+            tech_stats.append({
+                'technician': tech,
+                'total': tech_tickets.count(),
+                'resolved': resolved,
+                'in_progress': in_progress,
+            })
+
+    # Recent activity
+    recent_history = TicketHistory.objects.select_related(
+        'ticket', 'actor'
+    ).order_by('-created_at')[:10]
+
+    # Summary counts
+    summary = {
+        'total': tickets.count(),
+        'new': tickets.filter(status="NEW").count(),
+        'in_progress': tickets.filter(status="IN_PROGRESS").count(),
+        'resolved': tickets.filter(status="RESOLVED").count(),
+        'closed': tickets.filter(status="CLOSED").count(),
+        'critical': tickets.filter(urgency="CRITICAL").count(),
+        'overdue': overdue_count,
+    }
+
+    context = {
+        'summary': summary,
+        'status_stats': list(status_stats),
+        'urgency_stats': list(urgency_stats),
+        'category_stats': list(category_stats),
+        'tickets_by_day': list(tickets_by_day),
+        'avg_resolution_time': avg_resolution_time,
+        'tech_stats': tech_stats,
+        'recent_history': recent_history,
+    }
+
+    return render(request, "tickets/analytics.html", context)
+
+
+@login_required
+def export_tickets(request):
+    """Export tickets to CSV"""
+    tickets = Ticket.objects.all()
+
+    if request.user.role == "technician":
+        tickets = tickets.filter(assigned_to=request.user)
+    elif request.user.role == "user":
+        tickets = tickets.filter(created_by=request.user)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="tickets_export.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'ID', 'Title', 'Status', 'Urgency', 'Category',
+        'Created By', 'Assigned To', 'Created At', 'Resolved At',
+        'Time to Resolve (hours)', 'Is Overdue'
+    ])
+
+    for ticket in tickets:
+        writer.writerow([
+            ticket.id,
+            ticket.title,
+            ticket.status,
+            ticket.urgency,
+            ticket.category,
+            ticket.created_by.username,
+            ticket.assigned_to.username if ticket.assigned_to else 'Unassigned',
+            ticket.created_at.strftime('%Y-%m-%d %H:%M'),
+            ticket.resolved_at.strftime(
+                '%Y-%m-%d %H:%M') if ticket.resolved_at else '',
+            ticket.time_to_resolve if ticket.time_to_resolve else '',
+            'Yes' if ticket.is_overdue else 'No',
+        ])
+
+    return response

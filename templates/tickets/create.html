@@ -52,6 +52,19 @@
       </div>
 
       <div>
+        <label class="block text-sm text-white/70 mb-1">Category</label>
+        <select name="category"
+                class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500">
+          <option value="HARDWARE">Hardware</option>
+          <option value="SOFTWARE">Software</option>
+          <option value="NETWORK">Network</option>
+          <option value="ACCESS">Access & Permissions</option>
+          <option value="EMAIL">Email</option>
+          <option value="OTHER" selected>Other</option>
+        </select>
+      </div>
+
+      <div>
         <label class="block text-sm text-white/70 mb-1">Description</label>
         <textarea name="description" rows="6" required
                   class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"

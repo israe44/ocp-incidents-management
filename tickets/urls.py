@@ -18,6 +18,9 @@ urlpatterns = [
          views.ticket_take, name="ticket_take"),
 
     path("board/", views.board, name="board"),
+    path("analytics/", views.analytics, name="analytics"),
+    path("export/", views.export_tickets, name="export_tickets"),
+
     path("api/tickets/<int:ticket_id>/move/",
          views.api_move_ticket, name="api_move_ticket"),
 ]

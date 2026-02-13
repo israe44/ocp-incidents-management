@@ -38,12 +38,29 @@
           <div class="flex gap-2 text-xs">
             <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Urgency: <b>{{ ticket.urgency }}</b></span>
             <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Status: <b>{{ ticket.status }}</b></span>
+            <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Category: <b>{{ ticket.get_category_display }}</b></span>
+            {% if ticket.is_overdue %}
+            <span class="px-2 py-1 rounded-lg bg-red-600/30 border border-red-500 text-red-300">⚠️ OVERDUE</span>
+            {% endif %}
           </div>
         </div>
 
         <div class="mt-4">
           <h3 class="font-semibold mb-1">Description</h3>
           <p class="text-white/80 whitespace-pre-line">{{ ticket.description }}</p>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg bg-slate-900/60 border border-white/10 p-3">
+            <div class="text-white/60 text-xs mb-1">Age</div>
+            <div class="font-semibold">{{ ticket.age_in_hours }} hours</div>
+          </div>
+          {% if ticket.time_to_resolve %}
+          <div class="rounded-lg bg-slate-900/60 border border-white/10 p-3">
+            <div class="text-white/60 text-xs mb-1">Time to Resolve</div>
+            <div class="font-semibold text-green-400">{{ ticket.time_to_resolve }} hours</div>
+          </div>
+          {% endif %}
         </div>
 
         <div class="mt-4 text-sm text-white/60">

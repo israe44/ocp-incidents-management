@@ -1,78 +1,90 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ticket #{{ ticket.id }} - OCP Incidents</title>
+  <title>Ticket #{{ ticket.id }} - TicketFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-white">
-  <header class="border-b border-white/10 bg-white/5">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-semibold">Ticket #{{ ticket.id }}</h1>
-        <p class="text-white/60 text-sm">{{ ticket.title }}</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">
-          Back
-        </a>
-        <a href="{% url 'logout' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">
-          Logout
-        </a>
+<body class="min-h-screen bg-white">
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-8 py-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <img src="{% static 'images/image-1.png' %}" alt="TicketFlow" class="h-10 w-auto" />
+          <div>
+            <h1 class="text-xl font-semibold text-gray-900">Ticket #{{ ticket.id }}</h1>
+            <p class="text-xs text-gray-500">{{ ticket.title }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="{% url 'dashboard' %}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            ← Back
+          </a>
+          <a href="{% url 'logout' %}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            Logout
+          </a>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <main class="max-w-7xl mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <!-- Left: Ticket info -->
     <section class="lg:col-span-2 space-y-4">
-      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
+      <div class="bg-white border border-gray-200 rounded-lg p-5">
         <div class="flex flex-wrap items-center gap-2 justify-between">
-          <div class="text-sm text-white/60">
-            Created by <span class="text-white">{{ ticket.created_by.username }}</span>
+          <div class="text-sm text-gray-600">
+            Created by <span class="font-medium text-gray-900">{{ ticket.created_by.username }}</span>
             · {{ ticket.created_at|date:"Y-m-d H:i" }}
           </div>
 
           <div class="flex gap-2 text-xs">
-            <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Urgency: <b>{{ ticket.urgency }}</b></span>
-            <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Status: <b>{{ ticket.status }}</b></span>
-            <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Category: <b>{{ ticket.get_category_display }}</b></span>
+            <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">Urgency: <b>{{ ticket.urgency }}</b></span>
+            <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">Status: <b>{{ ticket.status }}</b></span>
+            <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">Category: <b>{{ ticket.get_category_display }}</b></span>
             {% if ticket.is_overdue %}
-            <span class="px-2 py-1 rounded-lg bg-red-600/30 border border-red-500 text-red-300">⚠️ OVERDUE</span>
+            <span class="px-2 py-1 rounded bg-red-100 text-red-700 font-medium">OVERDUE</span>
             {% endif %}
           </div>
         </div>
 
         <div class="mt-4">
-          <h3 class="font-semibold mb-1">Description</h3>
-          <p class="text-white/80 whitespace-pre-line">{{ ticket.description }}</p>
+          <h3 class="font-semibold text-gray-900 mb-1">Description</h3>
+          <p class="text-gray-700 whitespace-pre-line">{{ ticket.description }}</p>
         </div>
 
         <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-lg bg-slate-900/60 border border-white/10 p-3">
-            <div class="text-white/60 text-xs mb-1">Age</div>
-            <div class="font-semibold">{{ ticket.age_in_hours }} hours</div>
+          <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+            <div class="text-gray-600 text-xs mb-1">Age</div>
+            <div class="font-semibold text-gray-900">{{ ticket.age_in_hours }} hours</div>
           </div>
           {% if ticket.time_to_resolve %}
-          <div class="rounded-lg bg-slate-900/60 border border-white/10 p-3">
-            <div class="text-white/60 text-xs mb-1">Time to Resolve</div>
-            <div class="font-semibold text-green-400">{{ ticket.time_to_resolve }} hours</div>
+          <div class="rounded-lg bg-green-50 border border-green-200 p-3">
+            <div class="text-green-700 text-xs mb-1">Time to Resolve</div>
+            <div class="font-semibold text-green-700">{{ ticket.time_to_resolve }} hours</div>
           </div>
           {% endif %}
         </div>
 
-        <div class="mt-4 text-sm text-white/60">
+        <div class="mt-4 text-sm text-gray-700">
           Assigned to:
-          <span class="text-white">
+          <span class="font-medium text-gray-900">
             {% if ticket.assigned_to %}{{ ticket.assigned_to.username }}{% else %}—{% endif %}
           </span>
 
           {% if request.user.role == "technician" and not ticket.assigned_to %}
             <form method="POST" action="{% url 'ticket_take' ticket.id %}" class="mt-2">
               {% csrf_token %}
-              <button class="px-3 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-sm">
+              <button class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium">
                 Take this ticket
               </button>
             </form>
@@ -81,28 +93,28 @@
       </div>
 
       <!-- Comments -->
-      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
-        <h3 class="font-semibold mb-3">Comments</h3>
+      <div class="rounded-lg bg-white border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3">Comments</h3>
 
         <div class="space-y-3">
           {% for c in ticket.comments.all %}
-            <div class="rounded-xl bg-slate-900/60 border border-white/10 p-3">
-              <div class="text-sm font-medium">{{ c.author.username }}
-                <span class="text-xs text-white/50 font-normal">· {{ c.created_at|date:"Y-m-d H:i" }}</span>
+            <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+              <div class="text-sm font-medium text-gray-900">{{ c.author.username }}
+                <span class="text-xs text-gray-500 font-normal">· {{ c.created_at|date:"Y-m-d H:i" }}</span>
               </div>
-              <div class="text-white/80 mt-1 whitespace-pre-line">{{ c.content }}</div>
+              <div class="text-gray-700 mt-1 whitespace-pre-line">{{ c.content }}</div>
             </div>
           {% empty %}
-            <div class="text-white/60 text-sm">No comments yet.</div>
+            <div class="text-gray-500 text-sm">No comments yet.</div>
           {% endfor %}
         </div>
 
         <form method="POST" action="{% url 'ticket_comment' ticket.id %}" class="mt-4 space-y-2">
           {% csrf_token %}
           <textarea name="content" rows="3" required
-                    class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"
+                    class="w-full rounded-lg bg-white border border-gray-300 px-4 py-2 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                     placeholder="Write a comment..."></textarea>
-          <button class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium">
+          <button class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">
             Add comment
           </button>
         </form>
@@ -114,17 +126,17 @@
 
       <!-- Admin assign -->
       {% if request.user.role == "admin" %}
-      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
-        <h3 class="font-semibold mb-3">Assign to technician</h3>
+      <div class="rounded-lg bg-white border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3">Assign to technician</h3>
         <form method="POST" action="{% url 'ticket_assign' ticket.id %}" class="space-y-3">
           {% csrf_token %}
           <select name="technician_id"
-                  class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500">
+                  class="w-full rounded-lg bg-white border border-gray-300 px-4 py-2 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100">
             {% for tech in technicians %}
               <option value="{{ tech.id }}">{{ tech.username }}{% if tech.speciality %} — {{ tech.speciality }}{% endif %}</option>
             {% endfor %}
           </select>
-          <button class="w-full px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm font-medium">
+          <button class="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">
             Assign
           </button>
         </form>
@@ -133,18 +145,18 @@
 
       <!-- Status change -->
       {% if request.user.role == "admin" or request.user.role == "technician" %}
-      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
-        <h3 class="font-semibold mb-3">Update status</h3>
+      <div class="rounded-lg bg-white border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3">Update status</h3>
         <form method="POST" action="{% url 'ticket_status' ticket.id %}" class="space-y-3">
           {% csrf_token %}
           <select name="status"
-                  class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500">
+                  class="w-full rounded-lg bg-white border border-gray-300 px-4 py-2 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100">
             <option value="NEW" {% if ticket.status == "NEW" %}selected{% endif %}>NEW</option>
             <option value="IN_PROGRESS" {% if ticket.status == "IN_PROGRESS" %}selected{% endif %}>IN_PROGRESS</option>
             <option value="RESOLVED" {% if ticket.status == "RESOLVED" %}selected{% endif %}>RESOLVED</option>
             <option value="CLOSED" {% if ticket.status == "CLOSED" %}selected{% endif %}>CLOSED</option>
           </select>
-          <button class="w-full px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm font-medium">
+          <button class="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">
             Save
           </button>
         </form>
@@ -152,24 +164,24 @@
       {% endif %}
 
       <!-- History -->
-      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
-        <h3 class="font-semibold mb-3">History</h3>
+      <div class="rounded-lg bg-white border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3">History</h3>
         <div class="space-y-2 text-sm">
           {% for h in ticket.history.all %}
-            <div class="rounded-xl bg-slate-900/60 border border-white/10 p-3">
-              <div class="font-medium">{{ h.action }}</div>
-              <div class="text-white/60 text-xs">
+            <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+              <div class="font-medium text-gray-900">{{ h.action }}</div>
+              <div class="text-gray-600 text-xs">
                 by {{ h.actor.username }} · {{ h.created_at|date:"Y-m-d H:i" }}
                 {% if h.from_status or h.to_status %}
                   · {{ h.from_status }} → {{ h.to_status }}
                 {% endif %}
               </div>
               {% if h.note %}
-                <div class="text-white/70 mt-1">{{ h.note }}</div>
+                <div class="text-gray-700 mt-1">{{ h.note }}</div>
               {% endif %}
             </div>
           {% empty %}
-            <div class="text-white/60 text-sm">No history yet.</div>
+            <div class="text-gray-500 text-sm">No history yet.</div>
           {% endfor %}
         </div>
       </div>

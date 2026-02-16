@@ -1,55 +1,89 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>OCP Incidents - Login</title>
+  <title>TicketFlow - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+<body class="h-screen overflow-hidden bg-white">
+  <div class="flex h-full">
+    
+    <!-- Left Side - Image -->
+    <div class="w-3/5 h-full">
+      <img src="{% static 'images/image.png' %}" alt="OCP" class="w-full h-full object-cover" />
+    </div>
 
-  <div class="w-full max-w-md">
-    <div class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-xl">
-      <h1 class="text-2xl font-semibold">Sign in</h1>
-      <p class="text-white/60 mt-1">Access the incident management platform.</p>
-
-      {% if messages %}
-        <div class="mt-4 space-y-2">
-          {% for message in messages %}
-            <div class="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-red-200 text-sm">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      <form method="POST" class="mt-6 space-y-4">
-        {% csrf_token %}
-
-        <div>
-          <label class="block text-sm text-white/70 mb-1">Username or Email</label>
-          <input name="login" required
-                 class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"
-                 placeholder="ex: israe44 or israe@ocp.ma" />
+    <!-- Right Side - Login Form -->
+    <div class="w-2/5 h-full bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-12">
+      <div class="w-full max-w-md">
+        <!-- Header -->
+        <div class="mb-10">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p class="text-gray-600">Sign in to manage your incidents</p>
         </div>
 
-        <div>
-          <label class="block text-sm text-white/70 mb-1">Password</label>
-          <input name="password" type="password" required
-                 class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-2 outline-none focus:border-blue-500"
-                 placeholder="••••••••" />
+        {% if messages %}
+          <div class="mb-6 space-y-2">
+            {% for message in messages %}
+              <div class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm flex items-start">
+                <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6">
+          {% csrf_token %}
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Username or Email</label>
+            <input name="login" required
+                   class="w-full rounded-xl bg-white border-2 border-gray-200 px-4 py-3.5 text-gray-900 outline-none transition-all focus:border-green-600 focus:ring-4 focus:ring-green-100 hover:border-gray-300"
+                   placeholder="Enter your username or email" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <input name="password" type="password" required
+                   class="w-full rounded-xl bg-white border-2 border-gray-200 px-4 py-3.5 text-gray-900 outline-none transition-all focus:border-green-600 focus:ring-4 focus:ring-green-100 hover:border-gray-300"
+                   placeholder="Enter your password" />
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2">
+              <span class="ml-2 text-sm text-gray-600">Remember me</span>
+            </label>
+            <a href="#" class="text-sm font-medium text-green-600 hover:text-green-700">Forgot password?</a>
+          </div>
+
+          <button class="w-full rounded-xl bg-green-600 hover:bg-green-700 active:bg-green-800 transition-all duration-200 px-4 py-4 text-white font-semibold shadow-lg shadow-green-600/30 hover:shadow-xl hover:shadow-green-600/40 hover:-translate-y-0.5">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center">
+          <p class="text-sm text-gray-500">
+            Need help? Contact your system administrator
+          </p>
         </div>
-
-        <button class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 transition px-4 py-2 font-medium">
-          Login
-        </button>
-      </form>
-
-      <div class="mt-4 text-xs text-white/50">
-        Tip: use the admin user you created with <code class="text-white/70">createsuperuser</code>.
       </div>
     </div>
-  </div>
 
+  </div>
 </body>
 </html>

@@ -1,136 +1,228 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard - OCP Incidents</title>
+  <title>Dashboard - TicketFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { 
+      font-family: 'Inter', sans-serif; 
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .stat-card {
+      transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-white">
-  <header class="border-b border-white/10 bg-white/5">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-semibold">OCP Incidents</h1>
-        <p class="text-white/60 text-sm">Dashboard</p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <div class="text-right">
-          <div class="text-sm font-medium">{{ request.user.username }}</div>
-          <div class="text-xs text-white/60">{{ request.user.role }}</div>
+<body class="min-h-screen bg-white">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-8 py-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <img src="{% static 'images/image-1.png' %}" alt="TicketFlow" class="h-10 w-auto" />
+          <div>
+            <h1 class="text-xl font-semibold text-gray-900">TicketFlow</h1>
+            <p class="text-xs text-gray-500">Dashboard</p>
+          </div>
         </div>
-        <a href="{% url 'analytics' %}" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-500 text-sm">
-          📊 Analytics
-        </a>
-        <a href="{% url 'board' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">
-          Board
-        </a>
-        <a href="{% url 'logout' %}" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-sm">
-          Logout
-        </a>
+
+        <div class="flex items-center gap-4">
+          <div class="text-right hidden md:block">
+            <div class="text-sm font-medium text-gray-900">{{ request.user.username }}</div>
+            <div class="text-xs text-gray-500">{{ request.user.role }}</div>
+          </div>
+          <div class="h-6 w-px bg-gray-200 hidden md:block"></div>
+          <a href="{% url 'analytics' %}" 
+             class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            Analytics
+          </a>
+          <a href="{% url 'board' %}" 
+             class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            Board
+          </a>
+          <a href="{% url 'logout' %}" 
+             class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+            Logout
+          </a>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 py-6">
+  <main class="max-w-7xl mx-auto px-8 py-8">
     
     <!-- Summary Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-      <div class="rounded-xl bg-white/5 border border-white/10 p-3">
-        <div class="text-white/60 text-xs mb-1">Total</div>
-        <div class="text-xl font-bold">{{ summary.total }}</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Total</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.total }}</div>
       </div>
-      <div class="rounded-xl bg-blue-600/20 border border-blue-500/30 p-3">
-        <div class="text-blue-200 text-xs mb-1">New</div>
-        <div class="text-xl font-bold text-blue-300">{{ summary.new }}</div>
+      
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">New</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.new }}</div>
       </div>
-      <div class="rounded-xl bg-yellow-600/20 border border-yellow-500/30 p-3">
-        <div class="text-yellow-200 text-xs mb-1">In Progress</div>
-        <div class="text-xl font-bold text-yellow-300">{{ summary.in_progress }}</div>
+      
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-yellow-600 uppercase tracking-wide mb-2">In Progress</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.in_progress }}</div>
       </div>
-      <div class="rounded-xl bg-green-600/20 border border-green-500/30 p-3">
-        <div class="text-green-200 text-xs mb-1">Resolved</div>
-        <div class="text-xl font-bold text-green-300">{{ summary.resolved }}</div>
+      
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-green-600 uppercase tracking-wide mb-2">Resolved</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.resolved }}</div>
       </div>
-      <div class="rounded-xl bg-red-600/20 border border-red-500/30 p-3">
-        <div class="text-red-200 text-xs mb-1">Critical</div>
-        <div class="text-xl font-bold text-red-300">{{ summary.critical }}</div>
+      
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-red-600 uppercase tracking-wide mb-2">Critical</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.critical }}</div>
       </div>
-      <div class="rounded-xl bg-orange-600/20 border border-orange-500/30 p-3">
-        <div class="text-orange-200 text-xs mb-1">Overdue</div>
-        <div class="text-xl font-bold text-orange-300">{{ summary.overdue }}</div>
+      
+      <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">
+        <div class="text-xs font-medium text-orange-600 uppercase tracking-wide mb-2">Overdue</div>
+        <div class="text-3xl font-semibold text-gray-900">{{ summary.overdue }}</div>
       </div>
     </div>
 
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold">Tickets</h2>
-
-      {% if request.user.role != "technician" %}
-        <a href="{% url 'ticket_create' %}" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium">
-          + New Ticket
-        </a>
-      {% endif %}
-    </div>
-
-    <form class="flex flex-wrap gap-2 mb-4" method="GET">
-
-      <input name="search" value="{{ search|default:'' }}"
-             placeholder="Search title..."
-             class="rounded-xl bg-slate-900 border border-white/10 px-3 py-2 text-sm" />
-
-      <select name="status" class="rounded-xl bg-slate-900 border border-white/10 px-3 py-2 text-sm">
-        <option value="">All status</option>
-        <option value="NEW" {% if status == "NEW" %}selected{% endif %}>NEW</option>
-        <option value="IN_PROGRESS" {% if status == "IN_PROGRESS" %}selected{% endif %}>IN_PROGRESS</option>
-        <option value="RESOLVED" {% if status == "RESOLVED" %}selected{% endif %}>RESOLVED</option>
-        <option value="CLOSED" {% if status == "CLOSED" %}selected{% endif %}>CLOSED</option>
-      </select>
-
-      <select name="urgency" class="rounded-xl bg-slate-900 border border-white/10 px-3 py-2 text-sm">
-        <option value="">All urgency</option>
-        <option value="LOW" {% if urgency == "LOW" %}selected{% endif %}>LOW</option>
-        <option value="MEDIUM" {% if urgency == "MEDIUM" %}selected{% endif %}>MEDIUM</option>
-        <option value="HIGH" {% if urgency == "HIGH" %}selected{% endif %}>HIGH</option>
-        <option value="CRITICAL" {% if urgency == "CRITICAL" %}selected{% endif %}>CRITICAL</option>
-      </select>
-
-      <button class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm">
-        Filter
-      </button>
-
-    </form>
-
-    <div class="grid gap-3">
-      {% if tickets %}
-        {% for t in tickets %}
-          <a href="{% url 'ticket_detail' t.id %}"
-             class="block rounded-2xl bg-white/5 border border-white/10 p-4 hover:bg-white/10 transition">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <div class="font-semibold">#{{ t.id }} — {{ t.title }}</div>
-                <div class="text-sm text-white/60 mt-1">
-                  Urgency: <span class="text-white">{{ t.urgency }}</span> ·
-                  Status: <span class="text-white">{{ t.status }}</span>
-                </div>
-                <div class="text-xs text-white/50 mt-2">
-                  Created by: {{ t.created_by.username }}
-                  {% if t.assigned_to %} · Assigned to: {{ t.assigned_to.username }}{% endif %}
-                </div>
-              </div>
-
-              <div class="text-xs text-white/50 text-right">
-                <div>Created: {{ t.created_at|date:"Y-m-d H:i" }}</div>
-                <div>Updated: {{ t.updated_at|date:"Y-m-d H:i" }}</div>
-              </div>
-            </div>
-          </a>
-        {% endfor %}
-      {% else %}
-        <div class="rounded-2xl bg-white/5 border border-white/10 p-6 text-white/70">
-          No tickets found for your account.
+    <!-- Tickets Section -->
+    <div class="bg-white border border-gray-200 rounded-lg">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Tickets</h2>
+          <p class="text-sm text-gray-500 mt-0.5">All incidents and requests</p>
         </div>
-      {% endif %}
+
+        {% if request.user.role != "technician" %}
+          <a href="{% url 'ticket_create' %}" 
+             class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
+            + New Ticket
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Filters -->
+      <form class="flex flex-wrap gap-3 px-6 py-4 bg-gray-50 border-b border-gray-200" method="GET">
+        <input name="search" value="{{ search|default:'' }}"
+               placeholder="Search tickets..."
+               class="flex-1 min-w-[200px] px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+
+        <select name="status" class="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+          <option value="">All Status</option>
+          <option value="NEW" {% if status == "NEW" %}selected{% endif %}>New</option>
+          <option value="IN_PROGRESS" {% if status == "IN_PROGRESS" %}selected{% endif %}>In Progress</option>
+          <option value="RESOLVED" {% if status == "RESOLVED" %}selected{% endif %}>Resolved</option>
+          <option value="CLOSED" {% if status == "CLOSED" %}selected{% endif %}>Closed</option>
+        </select>
+
+        <select name="urgency" class="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+          <option value="">All Urgency</option>
+          <option value="LOW" {% if urgency == "LOW" %}selected{% endif %}>Low</option>
+          <option value="MEDIUM" {% if urgency == "MEDIUM" %}selected{% endif %}>Medium</option>
+          <option value="HIGH" {% if urgency == "HIGH" %}selected{% endif %}>High</option>
+          <option value="CRITICAL" {% if urgency == "CRITICAL" %}selected{% endif %}>Critical</option>
+        </select>
+
+        <button class="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-md transition-colors">
+          Filter
+        </button>
+      </form>
+
+      <!-- Tickets Table -->
+      <div class="overflow-x-auto">
+        {% if tickets %}
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Urgency</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for t in tickets %}
+                <tr class="hover:bg-gray-50 transition-colors ticket-row fade-in">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center">
+                      <span class="text-xs font-medium text-gray-500 mr-2">#{{ t.id }}</span>
+                      <span class="text-sm font-medium text-gray-900">{{ t.title }}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">by {{ t.created_by.username }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded {% if t.status == 'NEW' %}bg-blue-100 text-blue-700{% elif t.status == 'IN_PROGRESS' %}bg-yellow-100 text-yellow-700{% elif t.status == 'RESOLVED' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                      {{ t.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded {% if t.urgency == 'CRITICAL' %}bg-red-100 text-red-700{% elif t.urgency == 'HIGH' %}bg-orange-100 text-orange-700{% elif t.urgency == 'MEDIUM' %}bg-yellow-100 text-yellow-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                      {{ t.urgency }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">
+                    {% if t.assigned_to %}{{ t.assigned_to.username }}{% else %}<span class="text-gray-400">Unassigned</span>{% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500">
+                    {{ t.created_at|date:"M d, Y" }}
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <a href="{% url 'ticket_detail' t.id %}" class="text-sm font-medium text-green-600 hover:text-green-700">
+                      View →
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="px-6 py-12 text-center">
+            <p class="text-sm text-gray-500">No tickets found</p>
+          </div>
+        {% endif %}
+      </div>
     </div>
   </main>
+
+  <script>
+    // Smooth fade-in animation for ticket rows
+    document.addEventListener('DOMContentLoaded', function() {
+      const rows = document.querySelectorAll('.ticket-row');
+      rows.forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.03}s`;
+      });
+
+      // Add click event to table rows for better UX
+      rows.forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+          if (e.target.tagName !== 'A') {
+            const link = this.querySelector('a[href*="ticket_detail"]');
+            if (link) window.location.href = link.href;
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

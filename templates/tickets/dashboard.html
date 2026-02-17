@@ -69,6 +69,17 @@
 
   <main class="max-w-7xl mx-auto px-8 py-8">
     
+    <!-- Messages -->
+    {% if messages %}
+      <div class="mb-6 space-y-2">
+        {% for message in messages %}
+          <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %} border rounded-lg px-4 py-3 text-sm">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
     <!-- Summary Stats -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
       <div class="stat-card bg-white border border-gray-200 rounded-lg p-4">

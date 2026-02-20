@@ -221,10 +221,80 @@
 
 <script>
   // Parse data from Django context
-  const statusData = {{ status_stats_json|safe }};
-  const urgencyData = {{ urgency_stats_json|safe }};
-  const categoryData = {{ category_stats_json|safe }};
-  const timelineData = {{ tickets_by_day_json|safe }};
+  const statusData = JSON.parse('{{ status_stats_json|escapejs }}');
+  const urgencyData = JSON.parse('{{ urgency_stats_json|escapejs }}');
+  const categoryData = JSON.parse('{{ category_stats_json|escapejs }}');
+  const timelineData = JSON.parse('{{ tickets_by_day_json|escapejs }}');
+
+  // Color maps for cards
+  const statusColorMap = {
+    'NEW': '#3b82f6',
+    'IN_PROGRESS': '#eab308',
+    'RESOLVED': '#22c55e',
+    'CLOSED': '#6b7280',
+  };
+  const urgencyColorMap = {
+    'LOW': '#6b7280',
+    'MEDIUM': '#eab308',
+    'HIGH': '#f97316',
+    'CRITICAL': '#ef4444',
+  };
+
+  // Status Chart
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: statusData.map(s => s.status),
+      datasets: [{
+        data: statusData.map(s => s.count),
+        backgroundColor: statusData.map(s => statusColorMap[s.status] || '#d1d5db'),
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Urgency Chart
+  new Chart(document.getElementById('urgencyChart'), {
+    type: 'pie',
+    data: {
+      labels: urgencyData.map(u => u.urgency),
+      datasets: [{
+        data: urgencyData.map(u => u.count),
+        backgroundColor: urgencyData.map(u => urgencyColorMap[u.urgency] || '#d1d5db'),
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Category Chart
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+      labels: categoryData.map(c => c.category),
+      datasets: [{
+        label: 'Tickets',
+        data: categoryData.map(c => c.count),
+        backgroundColor: '#3b82f6',
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+
+  // Timeline Chart
+  new Chart(document.getElementById('timelineChart'), {
+    type: 'line',
+    data: {
+      labels: timelineData.map(t => t.date),
+      datasets: [{
+        label: 'Tickets Created',
+        data: timelineData.map(t => t.count),
+        backgroundColor: '#3b82f6',
+        borderColor: '#3b82f6',
+        fill: false,
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
 
   // Common chart colors
   const chartColors = {

@@ -1,3 +1,8 @@
+from django.utils import timezone
+from users.models import User
+import json
+import csv
+from datetime import timedelta, date
 from .models import Ticket, TicketHistory, Comment
 
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
@@ -9,12 +14,17 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count, Avg, Q, F
 from django.db.models.functions import TruncDate
-from django.utils import timezone
-from datetime import timedelta, date
-import csv
-import json
 
-from users.models import User
+
+@login_required
+def ticket_delete(request, ticket_id):
+    if request.user.role != "admin":
+        return HttpResponseForbidden("Only admins can delete tickets")
+
+    t = get_object_or_404(Ticket, id=ticket_id)
+    t.delete()
+    messages.success(request, "Ticket deleted successfully.")
+    return redirect("dashboard")
 
 
 @login_required
@@ -179,35 +189,6 @@ def ticket_assign(request, ticket_id):
 
 
 @login_required
-@require_POST
-def ticket_delete(request, ticket_id):
-    """Delete a ticket with proper permissions"""
-    t = get_object_or_404(Ticket, id=ticket_id)
-    
-    # Permission check
-    if request.user.role == "admin":
-        # Admins can delete any ticket
-        pass
-    elif request.user.role == "user" and t.created_by == request.user:
-        # Users can only delete their own NEW tickets that aren't assigned
-        if t.status != "NEW" or t.assigned_to:
-            messages.error(request, "You can only delete NEW unassigned tickets.")
-            return redirect("ticket_detail", ticket_id=t.id)
-    else:
-        # Technicians cannot delete tickets
-        return HttpResponseForbidden("You don't have permission to delete this ticket.")
-    
-    # Log deletion before deleting
-    ticket_info = f"#{t.id} - {t.title}"
-    
-    # Delete the ticket (cascades to comments and history)
-    t.delete()
-    
-    messages.success(request, f"Ticket {ticket_info} has been deleted successfully.")
-    return redirect("dashboard")
-
-
-@login_required
 def ticket_status(request, ticket_id):
     t = get_object_or_404(Ticket, id=ticket_id)
 
@@ -350,60 +331,25 @@ def analytics(request):
         tickets = tickets.filter(created_by=request.user)
 
     # Status distribution
-    status_order = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
-    status_stats_raw = tickets.values('status').annotate(
-        count=Count('id'))
-    
-    # Format status data for Chart.js in correct order
-    status_dict = {item['status']: item['count'] for item in status_stats_raw}
-    status_stats = [
-        {'status': status, 'count': status_dict.get(status, 0)}
-        for status in status_order
-    ]
+    status_stats = tickets.values('status').annotate(
+        count=Count('id')).order_by('status')
 
     # Urgency distribution
-    urgency_order = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
-    urgency_stats_raw = tickets.values('urgency').annotate(
-        count=Count('id'))
-    
-    # Format urgency data in correct order
-    urgency_dict = {item['urgency']: item['count'] for item in urgency_stats_raw}
-    urgency_stats = [
-        {'urgency': urg, 'count': urgency_dict.get(urg, 0)}
-        for urg in urgency_order
-    ]
+    urgency_stats = tickets.values('urgency').annotate(
+        count=Count('id')).order_by('urgency')
 
     # Category distribution
-    category_stats_raw = tickets.values('category').annotate(
-        count=Count('id')).order_by('-count')
-    
-    category_stats = [
-        {'category': dict(Ticket.CATEGORY_CHOICES).get(item['category'], item['category']), 
-         'count': item['count']}
-        for item in category_stats_raw
-    ]
+    category_stats = tickets.values('category').annotate(
+        count=Count('id')).order_by('category')
 
     # Time-based statistics (last 30 days)
     thirty_days_ago = timezone.now() - timedelta(days=30)
     recent_tickets = tickets.filter(created_at__gte=thirty_days_ago)
 
-    # Tickets created per day (last 30 days) - fill all dates
-    tickets_by_day_raw = recent_tickets.annotate(
+    # Tickets created per day (last 30 days)
+    tickets_by_day = recent_tickets.annotate(
         date=TruncDate('created_at')
     ).values('date').annotate(count=Count('id')).order_by('date')
-    
-    # Create a complete date range
-    date_dict = {item['date']: item['count'] for item in tickets_by_day_raw}
-    tickets_by_day = []
-    current_date = thirty_days_ago.date()
-    today = timezone.now().date()
-    
-    while current_date <= today:
-        tickets_by_day.append({
-            'date': current_date.strftime('%Y-%m-%d'),
-            'count': date_dict.get(current_date, 0)
-        })
-        current_date += timedelta(days=1)
 
     # Average resolution time (in hours) for resolved tickets
     resolved_tickets = tickets.filter(resolved_at__isnull=False)
@@ -450,15 +396,27 @@ def analytics(request):
         'overdue': overdue_count,
     }
 
+    # Prepare JSON for charts
+    import json
+    # Convert date objects to strings for JSON serialization
+    tickets_by_day_serializable = [
+        {**d, 'date': d['date'].isoformat() if hasattr(d['date'],
+                                                       'isoformat') else str(d['date'])}
+        for d in tickets_by_day
+    ]
     context = {
         'summary': summary,
-        'status_stats_json': json.dumps(status_stats),
-        'urgency_stats_json': json.dumps(urgency_stats),
-        'category_stats_json': json.dumps(category_stats),
-        'tickets_by_day_json': json.dumps(tickets_by_day),
+        'status_stats': list(status_stats),
+        'urgency_stats': list(urgency_stats),
+        'category_stats': list(category_stats),
+        'tickets_by_day': list(tickets_by_day),
         'avg_resolution_time': avg_resolution_time,
         'tech_stats': tech_stats,
         'recent_history': recent_history,
+        'status_stats_json': json.dumps(list(status_stats)),
+        'urgency_stats_json': json.dumps(list(urgency_stats)),
+        'category_stats_json': json.dumps(list(category_stats)),
+        'tickets_by_day_json': json.dumps(tickets_by_day_serializable),
     }
 
     return render(request, "tickets/analytics.html", context)
@@ -466,74 +424,38 @@ def analytics(request):
 
 @login_required
 def export_tickets(request):
-    """Export tickets to CSV with enhanced readability"""
-    tickets = Ticket.objects.all().select_related('created_by', 'assigned_to')
+    """Export tickets to CSV"""
+    tickets = Ticket.objects.all()
 
     if request.user.role == "technician":
         tickets = tickets.filter(assigned_to=request.user)
     elif request.user.role == "user":
         tickets = tickets.filter(created_by=request.user)
 
-    # Generate filename with timestamp
-    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'tickets_export_{timestamp}.csv'
-
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="tickets_export.csv"'
 
     writer = csv.writer(response)
-    
-    # Write header with readable column names
     writer.writerow([
-        'Ticket ID',
-        'Title',
-        'Description',
-        'Status',
-        'Urgency',
-        'Category',
-        'Created By',
-        'Assigned To',
-        'Created Date',
-        'Updated Date',
-        'Resolved Date',
-        'Closed Date',
-        'Age (Days)',
-        'Time to Resolve (Hours)',
-        'Is Overdue',
-        'SLA Status'
+        'ID', 'Title', 'Status', 'Urgency', 'Category',
+        'Created By', 'Assigned To', 'Created At', 'Resolved At',
+        'Time to Resolve (hours)', 'Is Overdue'
     ])
 
-    # Status and urgency mappings for readable output
-    status_map = dict(Ticket.STATUS_CHOICES)
-    urgency_map = dict(Ticket.URGENCY_CHOICES)
-    category_map = dict(Ticket.CATEGORY_CHOICES)
-
-    for ticket in tickets.order_by('-created_at'):
-        # Calculate age in days
-        age_days = round((timezone.now() - ticket.created_at).total_seconds() / 86400, 1)
-        
-        # SLA status
-        sla_status = 'OVERDUE' if ticket.is_overdue else 'ON TIME'
-        if ticket.status in ['RESOLVED', 'CLOSED']:
-            sla_status = 'COMPLETED'
-
+    for ticket in tickets:
         writer.writerow([
-            f'#{ticket.id}',
+            ticket.id,
             ticket.title,
-            ticket.description[:100] + '...' if len(ticket.description) > 100 else ticket.description,
-            status_map.get(ticket.status, ticket.status),
-            urgency_map.get(ticket.urgency, ticket.urgency),
-            category_map.get(ticket.category, ticket.category),
+            ticket.status,
+            ticket.urgency,
+            ticket.category,
             ticket.created_by.username,
             ticket.assigned_to.username if ticket.assigned_to else 'Unassigned',
-            ticket.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            ticket.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            ticket.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.resolved_at else '-',
-            ticket.closed_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.closed_at else '-',
-            f'{age_days} days',
-            f'{ticket.time_to_resolve} hours' if ticket.time_to_resolve else '-',
-            'YES' if ticket.is_overdue else 'NO',
-            sla_status
+            ticket.created_at.strftime('%Y-%m-%d %H:%M'),
+            ticket.resolved_at.strftime(
+                '%Y-%m-%d %H:%M') if ticket.resolved_at else '',
+            ticket.time_to_resolve if ticket.time_to_resolve else '',
+            'Yes' if ticket.is_overdue else 'No',
         ])
 
     return response
